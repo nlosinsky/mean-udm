@@ -1,3 +1,4 @@
+import { HttpClientModule } from '@angular/common/http';
 import { PostsService } from './posts/posts.service';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
@@ -25,7 +26,8 @@ import { PostListComponent } from './posts/post-list/post-list.component';
     FormsModule,
     MatToolbarModule,
     MatButtonModule,
-    MatExpansionModule
+    MatExpansionModule,
+    HttpClientModule
   ],
   providers: [
   ],

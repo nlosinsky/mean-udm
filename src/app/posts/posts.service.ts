@@ -1,21 +1,34 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { Post } from './post.model';
 
 @Injectable({providedIn: 'root'})
 export class PostsService {
   private posts: Post[] = [];
   private postsUpdated = new BehaviorSubject<Post[]>([]);
+  posts$: Observable<Post[]>;
 
-  constructor() {}
+  constructor(
+    private http: HttpClient
+  ) {
+    this.posts$ = this.postsUpdated.asObservable();
+  }
 
   getPosts() {
-    return this.postsUpdated.asObservable();
+    this.http.get<{message: string, posts: Post[]}>('http://localhost:3000/api/posts')
+      .subscribe((resp) => {
+        this.posts = resp.posts;
+        this.postsUpdated.next(resp.posts);
+      });
   }
 
   addPost(title, content) {
     const post = {title, content};
-    this.posts.push(post);
-    this.postsUpdated.next([...this.posts]);
+    this.http.post('http://localhost:3000/api/posts', post)
+      .subscribe(() => {
+        this.posts.push(post);
+        this.postsUpdated.next([...this.posts]);
+      });
   }
 }

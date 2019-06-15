@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, pluck } from 'rxjs/operators';
 import { Post } from './post.model';
 
 @Injectable({providedIn: 'root'})
@@ -16,13 +16,18 @@ export class PostsService {
     this.posts$ = this.postsUpdated.asObservable();
   }
 
+  getPost(id: string) {
+    return this.http.get('http://localhost:3000/api/posts/' + id)
+      .pipe(
+        pluck('post'),
+        map(this.transformPost)
+      );
+  }
+
   getPosts() {
     this.http.get<{message: string, posts: any}>('http://localhost:3000/api/posts')
       .pipe(map(({posts}) => {
-        return posts.map(post => {
-          const {_id, ...rest} = post;
-          return {id: _id, ...rest};
-        });
+        return posts.map(this.transformPost);
       }))
       .subscribe((posts) => {
         this.posts = posts;
@@ -33,12 +38,23 @@ export class PostsService {
   addPost(title, content) {
     const post = {title, content};
     this.http.post('http://localhost:3000/api/posts', post)
-      .pipe(map((item: any) => {
-        const {_id, ...rest} = item.post;
-        return {id: _id, ...rest};
-      }))
+      .pipe(
+        pluck('post'),
+        map(this.transformPost)
+      )
       .subscribe((resp: any) => {
         this.posts.push(resp);
+        this.postsUpdated.next([...this.posts]);
+      });
+  }
+
+  updatePost(newPost) {
+    this.http.put('http://localhost:3000/api/posts', newPost)
+      .subscribe(() => {
+        this.posts = this.posts.map(post => {
+          return (post.id === newPost.id) ? newPost : post;
+        });
+
         this.postsUpdated.next([...this.posts]);
       });
   }
@@ -50,5 +66,10 @@ export class PostsService {
         this.posts = this.posts.filter(post => post.id !== id);
         this.postsUpdated.next([...this.posts]);
       });
+  }
+
+  private transformPost(post) {
+    const {_id, ...rest} = post;
+    return {id: _id, ...rest};
   }
 }

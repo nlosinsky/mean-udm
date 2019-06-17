@@ -35,25 +35,43 @@ export class PostsService {
       });
   }
 
-  addPost(title, content) {
-    const post = {title, content};
-    this.http.post('http://localhost:3000/api/posts', post)
-      .pipe(
-        pluck('post'),
-        map(this.transformPost)
-      )
-      .subscribe((resp: any) => {
-        this.posts.push(resp);
+  addPost(post) {
+    const {title, content, image} = post;
+    const postData = new FormData();
+    postData.append('title', title);
+    postData.append('content', content);
+    postData.append('image', image, title);
+
+    this.http.post('http://localhost:3000/api/posts', postData)
+      .pipe(pluck('post'))
+      .subscribe((newPost: Post) => {
+        this.posts.push(newPost);
         this.postsUpdated.next([...this.posts]);
       });
   }
 
   updatePost(newPost) {
-    this.http.put('http://localhost:3000/api/posts', newPost)
-      .subscribe(() => {
-        this.posts = this.posts.map(post => {
-          return (post.id === newPost.id) ? newPost : post;
-        });
+    const {title, content, image, id} = newPost;
+    let postData;
+    if (typeof image === 'object') {
+      postData = new FormData();
+      postData.append('id', id);
+      postData.append('title', title);
+      postData.append('content', content);
+      postData.append('image', image, title);
+    } else {
+      postData = {
+        id,
+        title,
+        content,
+        imagePath: image
+      };
+    }
+
+    this.http.put('http://localhost:3000/api/posts', postData)
+      .pipe(pluck('post'))
+      .subscribe((resp: Post) => {
+        this.posts = this.posts.map(post => (post.id === id) ? resp : post);
 
         this.postsUpdated.next([...this.posts]);
       });

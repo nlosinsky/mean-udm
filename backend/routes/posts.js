@@ -1,27 +1,61 @@
 const express = require('express');
 const router = express.Router();
 const Post = require('../models/Post');
+const multer = require('multer');
+const MIME_TYPE_MAP = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/jpg': 'jpg'
+};
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const isValid = !!MIME_TYPE_MAP[file.mimetype];
+    let error = null;
 
-router.post('/', (req, res, next) => {
+    if (!isValid) {
+      error = new Error('Invalid mime type');
+    }
+    cb(error, 'backend/images');
+  },
+  filename: (req, file, cb) => {
+    const name = file.originalname.toLowerCase().split(' ').join('');
+    const ext = MIME_TYPE_MAP[file.mimetype];
+    cb(null, name + '-' + Date.now() + '.' + ext);
+  }
+});
+
+router.post('/', multer({storage}).single('image'), (req, res, next) => {
+  const url = req.protocol + '://' + req.get('host');
   new Post({
     title: req.body.title,
-    content: req.body.content
+    content: req.body.content,
+    imagePath: url + '/images/' + req.file.filename
   }).save().then((post) => {
     res.status(201).json({
       message: "Post added successfully",
-      post
+      post: getPostData(post)
     });
   });
 });
 
-router.put('/', (req, res, next) => {
-  const {id, title, content} = req .body;
+router.put('/', multer({storage}).single('image'), (req, res, next) => {
+  let imagePath = req.body.imagePath;
+  if (req.file) {
+    const url = req.protocol + '://' + req.get('host');
+    imagePath = url + '/images/' + req.file.filename
+  }
 
-  Post.findByIdAndUpdate(id, {title, content})
+  const {id, ...rest} = req .body;
+  const data = {
+    ...rest,
+    imagePath
+  };
+
+  Post.findByIdAndUpdate(id, data, {new: true})
     .then((post) => {
       res.status(200).json({
         message: "Post updated successfully",
-        post
+        post: getPostData(post)
       });
     });
 });
@@ -31,7 +65,7 @@ router.get('/', (req, res, next) => {
     .then(posts => {
       res.status(200).json({
         message: 'Posts fetched successfully',
-        posts
+        posts: posts.map(getPostData)
       });
     });
 });
@@ -42,7 +76,7 @@ router.get('/:id', (req, res, next) => {
       if (post) {
         res.status(200).json({
           message: 'Post fetched successfully',
-          post
+          post: getPostData(post)
         });
       } else {
         res.sendStatus(404);
@@ -57,10 +91,19 @@ router.delete('/:id', (req, res, next) => {
       res.status(200).json({message: 'success'});
     })
     .catch(err => {
-      console.log(err);
       res.sendStatus(400);
     })
 
 });
+
+function getPostData(post) {
+  const {_id, title, content, imagePath} = post;
+  return {
+    id: _id,
+    title,
+    content,
+    imagePath
+  }
+}
 
 module.exports = router;

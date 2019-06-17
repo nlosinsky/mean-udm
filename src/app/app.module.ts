@@ -13,7 +13,7 @@ import {
   MatExpansionModule,
   MatProgressSpinnerModule
 } from '@angular/material';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { HeaderComponent } from './header/header.component';
 
 @NgModule({
@@ -27,13 +27,13 @@ import { HeaderComponent } from './header/header.component';
     BrowserAnimationsModule,
     MatInputModule,
     MatCardModule,
-    FormsModule,
     MatToolbarModule,
     MatButtonModule,
     MatExpansionModule,
     HttpClientModule,
     AppRoutingModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    ReactiveFormsModule
   ],
   providers: [
   ],

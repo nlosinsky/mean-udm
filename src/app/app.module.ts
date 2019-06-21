@@ -11,7 +11,7 @@ import {
   MatToolbarModule,
   MatButtonModule,
   MatExpansionModule,
-  MatProgressSpinnerModule
+  MatProgressSpinnerModule, MatPaginatorModule
 } from '@angular/material';
 import { ReactiveFormsModule } from '@angular/forms';
 import { HeaderComponent } from './header/header.component';
@@ -33,7 +33,8 @@ import { HeaderComponent } from './header/header.component';
     HttpClientModule,
     AppRoutingModule,
     MatProgressSpinnerModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    MatPaginatorModule
   ],
   providers: [
   ],

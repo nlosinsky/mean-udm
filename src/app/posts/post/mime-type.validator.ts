@@ -14,9 +14,10 @@ export const mimeType = (control: AbstractControl): Promise<{[key: string]: any}
       const arr = new Uint8Array(reader.result as ArrayBuffer).subarray(0, 4);
       let header = '';
       let isValid = false;
-      for (let i = 0; i < arr.length; i++) {
-        header += arr[i].toString(16);
-      }
+
+      arr.forEach(item => {
+        header += item.toString(16);
+      });
 
       switch (header) {
         case '89504e47':

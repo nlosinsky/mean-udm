@@ -6,14 +6,16 @@ import { Post } from './post.model';
 
 @Injectable({providedIn: 'root'})
 export class PostsService {
-  private posts: Post[] = [];
   private postsUpdated = new BehaviorSubject<Post[]>([]);
+  private postsCount = new BehaviorSubject<number>(0);
   posts$: Observable<Post[]>;
+  postsCount$: Observable<number>;
 
   constructor(
     private http: HttpClient
   ) {
     this.posts$ = this.postsUpdated.asObservable();
+    this.postsCount$ = this.postsCount.asObservable();
   }
 
   getPost(id: string) {
@@ -24,14 +26,18 @@ export class PostsService {
       );
   }
 
-  getPosts() {
-    this.http.get<{message: string, posts: any}>('http://localhost:3000/api/posts')
-      .pipe(map(({posts}) => {
-        return posts.map(this.transformPost);
+  getPosts(page: number, pageSize: number) {
+    const queryParams = `?page=${page}&pageSize=${pageSize}`;
+    this.http.get<{message: string, posts: any, count: number}>('http://localhost:3000/api/posts' + queryParams)
+      .pipe(map(({posts, count}) => {
+        return {
+          posts: posts.map(this.transformPost),
+          count
+        };
       }))
-      .subscribe((posts) => {
-        this.posts = posts;
+      .subscribe(({posts, count}) => {
         this.postsUpdated.next(posts);
+        this.postsCount.next(count);
       });
   }
 
@@ -44,10 +50,7 @@ export class PostsService {
 
     this.http.post('http://localhost:3000/api/posts', postData)
       .pipe(pluck('post'))
-      .subscribe((newPost: Post) => {
-        this.posts.push(newPost);
-        this.postsUpdated.next([...this.posts]);
-      });
+      .subscribe();
   }
 
   updatePost(newPost) {
@@ -70,20 +73,11 @@ export class PostsService {
 
     this.http.put('http://localhost:3000/api/posts', postData)
       .pipe(pluck('post'))
-      .subscribe((resp: Post) => {
-        this.posts = this.posts.map(post => (post.id === id) ? resp : post);
-
-        this.postsUpdated.next([...this.posts]);
-      });
+      .subscribe();
   }
 
   deletePost(id) {
-    this.http.delete(`http://localhost:3000/api/posts/${id}`)
-      .subscribe(() => {
-        console.log('deleted');
-        this.posts = this.posts.filter(post => post.id !== id);
-        this.postsUpdated.next([...this.posts]);
-      });
+    return this.http.delete(`http://localhost:3000/api/posts/${id}`);
   }
 
   private transformPost(post) {

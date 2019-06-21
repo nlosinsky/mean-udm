@@ -18,6 +18,11 @@
       </mat-action-row>
     </mat-expansion-panel>
   </mat-accordion>
+  <mat-paginator [length]="postsCount$ | async"
+                 [pageSize]="postsPerPage"
+                 [pageSizeOptions]="pageSizeOptions"
+                 (page)="onChangedPage($event)"
+  ></mat-paginator>
 </ng-container>
 
 

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { AuthService } from '../../auth/auth.service';
 import { Post } from '../post.model';
 import { PostsService } from '../posts.service';
 
@@ -20,7 +21,8 @@ export class PostListComponent implements OnInit {
   currentPage = 0;
 
   constructor(
-    private postsService: PostsService
+    private postsService: PostsService,
+    public authService: AuthService
   ) { }
 
   ngOnInit() {

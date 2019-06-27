@@ -8,6 +8,7 @@ import { AuthData } from './auth-data.model';
 @Injectable({providedIn: 'root'})
 export class AuthService {
   authStatus$: Observable<boolean>;
+  userId: string;
   private authStatusListener = new BehaviorSubject<boolean>(false);
 
   constructor(
@@ -28,7 +29,10 @@ export class AuthService {
   login(data: AuthData) {
     return this.http.post('http://localhost:3000/api/user/login', data)
       .pipe(
-        tap(({token}: any) => localStorage.setItem('mean_token', token || '')),
+        tap(({token, userId}: any) => {
+          localStorage.setItem('mean_token', token || '');
+          localStorage.setItem('mean_user_id', userId || '');
+        }),
         tap(() => this.changeAuthStatus()),
         tap(() => this.router.navigate(['/']))
       );
@@ -41,11 +45,13 @@ export class AuthService {
 
   reset() {
     localStorage.removeItem('mean_token');
-    this.authStatusListener.next(false);
+    localStorage.removeItem('mean_user_id');
+    this.changeAuthStatus();
   }
 
   private changeAuthStatus() {
     const token = localStorage.getItem('mean_token');
+    this.userId = localStorage.getItem('mean_user_id');
 
     this.authStatusListener.next(!!token);
   }

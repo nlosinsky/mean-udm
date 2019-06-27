@@ -24,19 +24,30 @@ app.use((req, res, next) => {
 });
 
 app.use((req, res, next) => {
+  const header = req.get('Authorization');
+  if (!header) return next();
+
+  const token = header.split(' ')[1];
+  if (!token) return next();
+
+  try {
+    req.userData = jwt.verify(token, 'secret');
+  } catch(err) {
+    return next();
+  }
+
+  return next();
+});
+
+app.use((req, res, next) => {
   const oldJson = res.json;
 
   res.json = function(data) {
-    try {
-      const token = req.get('Authorization').split(' ')[1];
-      jwt.verify(token, 'secret');
-    }  catch (error) {
-      if (error instanceof jwt.TokenExpiredError) {
-        data.logoutRequired = true;
-      }
-    } finally {
-      oldJson.call(res, data);
+    if (!req.userData) {
+      data.logoutRequired = true;
     }
+
+    oldJson.call(res, data);
   };
 
   next();

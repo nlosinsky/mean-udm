@@ -25,52 +25,10 @@ const storage = multer.diskStorage({
   }
 });
 
-router.post('/',
-  checkAuth,
-  multer({storage}).single('image'),
-  (req, res, next) => {
-  const url = req.protocol + '://' + req.get('host');
-  new Post({
-    title: req.body.title,
-    content: req.body.content,
-    imagePath: url + '/images/' + req.file.filename
-  }).save().then((post) => {
-    res.status(201).json({
-      message: "Post added successfully",
-      post: getPostData(post)
-    });
-  });
-});
-
-router.put('/',
-  checkAuth,
-  multer({storage}).single('image'),
-  (req, res, next) => {
-  let imagePath = req.body.imagePath;
-  if (req.file) {
-    const url = req.protocol + '://' + req.get('host');
-    imagePath = url + '/images/' + req.file.filename
-  }
-
-  const {id, ...rest} = req .body;
-  const data = {
-    ...rest,
-    imagePath
-  };
-
-  Post.findByIdAndUpdate(id, data, {new: true})
-    .then((post) => {
-      res.status(200).json({
-        message: "Post updated successfully",
-        post: getPostData(post)
-      });
-    });
-});
-
 router.get('/', (req, res, next) => {
   const currentPage = +req.query.page;
   const pageSize = +req.query.pageSize;
-  const postQuery = Post.find();
+  const postQuery = Post.find({});
 
   if (typeof currentPage === 'number' && pageSize) {
     postQuery
@@ -108,24 +66,80 @@ router.get('/:id', (req, res, next) => {
     });
 });
 
-router.delete('/:id', checkAuth, (req, res, next) => {
-  Post.findByIdAndDelete(req.params.id)
-    .then(() => {
-      res.status(200).json({message: 'success'});
-    })
-    .catch(err => {
-      res.sendStatus(400);
-    })
+router.post('/',
+  checkAuth,
+  multer({ storage }).single('image'),
+  (req, res, next) => {
+    const url = req.protocol + '://' + req.get('host');
+    new Post({
+      title: req.body.title,
+      content: req.body.content,
+      imagePath: url + '/images/' + req.file.filename,
+      creator: req.userData.userId
+    }).save().then((post) => {
+      res.status(201).json({
+        message: "Post added successfully",
+        post: getPostData(post)
+      });
+    });
+  });
 
-});
+router.put('/',
+  checkAuth,
+  multer({ storage }).single('image'),
+  (req, res, next) => {
+    let imagePath = req.body.imagePath;
+    if (req.file) {
+      const url = req.protocol + '://' + req.get('host');
+      imagePath = url + '/images/' + req.file.filename
+    }
+
+    const { id, ...rest } = req.body;
+    const data = {
+      ...rest,
+      imagePath,
+      creator: req.userData.userId
+    };
+
+    Post.findByIdAndUpdate(id, data)
+      .then((post) => {
+        res.status(200).json({
+          message: "Post updated successfully",
+          post: getPostData(post)
+        });
+      });
+  });
+
+router.delete('/:id',
+  checkAuth,
+  (req, res, next) => {
+    Post.findById(req.params.id)
+      .then((post) => {
+        if (post.creator.toString() !== req.userData.userId) {
+          return res.status(401).json({
+            message: "Not authorized"
+          });
+        }
+
+        return post.delete();
+      })
+      .then(() => {
+        res.status(200).json({ message: 'success' });
+      })
+      .catch(err => {
+        res.sendStatus(400);
+      })
+
+  });
 
 function getPostData(post) {
-  const {_id, title, content, imagePath} = post;
+  const { _id, title, content, imagePath, creator } = post;
   return {
     id: _id,
     title,
     content,
-    imagePath
+    imagePath,
+    creator
   }
 }
 

@@ -25,8 +25,8 @@ router.post('/signup', (req, res, next) => {
 router.post('/login', (req, res, nect) => {
   let fetchedUser = null;
 
-  User.findOne({email: req.body.email})
-    .then(user  => {
+  User.findOne({ email: req.body.email })
+    .then(user => {
       if (!user) {
         return res.status(404).json({
           message: 'Auth failed'
@@ -45,15 +45,16 @@ router.post('/login', (req, res, nect) => {
       }
 
       jwt.sign(
-        {email: fetchedUser.email, userId: fetchedUser._id},
+        { email: fetchedUser.email, userId: fetchedUser._id },
         'secret',
-        {expiresIn: '1h'},
+        { expiresIn: '1h' },
         (err, token) => {
           if (err) throw err;
 
           res.status(200).json({
             message: 'Auth Success',
-            token
+            token,
+            userId: fetchedUser._id
           })
         });
     })

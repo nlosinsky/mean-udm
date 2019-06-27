@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { Subject } from 'rxjs';
+import { finalize, takeUntil, tap } from 'rxjs/operators';
 import { Post } from '../post.model';
 import { PostsService } from '../posts.service';
 import { mimeType } from './mime-type.validator';
@@ -11,18 +13,21 @@ import { mimeType } from './mime-type.validator';
   styleUrls: ['./post.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PostComponent implements OnInit {
+export class PostComponent implements OnInit, OnDestroy {
   isEditPage = false;
   post: Post;
   isLoading = false;
   form: FormGroup;
   imagePreview: string;
 
+  private ngUnsubscribe = new Subject();
+
   constructor(
     private postsService: PostsService,
     private route: ActivatedRoute,
     private router: Router,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private cd: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
@@ -30,6 +35,11 @@ export class PostComponent implements OnInit {
 
     this.initForm();
     this.handleParams();
+  }
+
+  ngOnDestroy(): void {
+    this.ngUnsubscribe.next();
+    this.ngUnsubscribe.complete();
   }
 
   private handleParams() {
@@ -47,10 +57,12 @@ export class PostComponent implements OnInit {
       }
 
       this.postsService.getPost(postId)
+        .pipe(takeUntil(this.ngUnsubscribe))
         .subscribe((post: Post) => {
           this.setForm(post);
           this.post = post;
           this.isLoading = false;
+          this.cd.detectChanges();
         });
     });
   }
@@ -84,27 +96,35 @@ export class PostComponent implements OnInit {
     }
 
     this.isLoading = true;
-
     const {title, content, image} = this.form.value;
+    let data = {title, content, image};
 
-    if (this.isEditPage) {
-      const data = {
-        ...this.post,
-        title,
-        content,
-        image
-      };
-      this.postsService.updatePost(data);
-    } else {
-      const data = {
-        title,
-        content,
-        image
-      };
-      this.postsService.addPost(data);
-      this.form.reset();
-    }
-    this.router.navigate(['/']);
+    data = this.isEditPage ? {...this.post, ...data} : data;
+
+    const observable = this.isEditPage ? this.updatePost(data) : this.addPost(data);
+
+    observable
+      .pipe(
+        takeUntil(this.ngUnsubscribe),
+        finalize(() => {
+          this.isLoading = false;
+          this.cd.detectChanges();
+        })
+      )
+      .subscribe(() => {
+        this.router.navigate(['/']);
+      });
+  }
+
+  private updatePost(data) {
+    return this.postsService.updatePost(data);
+  }
+
+  private addPost(data) {
+    return this.postsService.addPost(data)
+      .pipe(
+        tap(() => this.form.reset())
+      );
   }
 
   onImage(event: Event) {
@@ -114,6 +134,7 @@ export class PostComponent implements OnInit {
     const reader = new FileReader();
     reader.onload = () => {
       this.imagePreview = reader.result as string;
+      this.cd.detectChanges();
     };
     reader.readAsDataURL(file);
   }

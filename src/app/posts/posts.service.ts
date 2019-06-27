@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map, pluck } from 'rxjs/operators';
@@ -26,9 +26,13 @@ export class PostsService {
       );
   }
 
-  getPosts(page: number, pageSize: number) {
-    const queryParams = `?page=${page}&pageSize=${pageSize}`;
-    this.http.get<{message: string, posts: any, count: number}>('http://localhost:3000/api/posts' + queryParams)
+  loadPosts(page: number, pageSize: number) {
+    const params = new HttpParams({fromObject: {
+      page: page.toString(),
+      pageSize: pageSize.toString()
+    }});
+
+    this.http.get<{message: string, posts: any, count: number}>('http://localhost:3000/api/posts', {params})
       .pipe(map(({posts, count}) => {
         return {
           posts: posts.map(this.transformPost),
@@ -48,32 +52,33 @@ export class PostsService {
     postData.append('content', content);
     postData.append('image', image, title);
 
-    this.http.post('http://localhost:3000/api/posts', postData)
-      .pipe(pluck('post'))
-      .subscribe();
+    return this.http.post('http://localhost:3000/api/posts', postData)
+      .pipe(pluck('post'));
   }
 
   updatePost(newPost) {
-    const {title, content, image, id} = newPost;
+    const {title, content, image, id, creator} = newPost;
+    console.log(creator);
     let postData;
     if (typeof image === 'object') {
       postData = new FormData();
       postData.append('id', id);
       postData.append('title', title);
       postData.append('content', content);
+      postData.append('creator', creator);
       postData.append('image', image, title);
     } else {
       postData = {
         id,
         title,
         content,
+        creator,
         imagePath: image
       };
     }
 
-    this.http.put('http://localhost:3000/api/posts', postData)
-      .pipe(pluck('post'))
-      .subscribe();
+    return this.http.put('http://localhost:3000/api/posts', postData)
+      .pipe(pluck('post'));
   }
 
   deletePost(id) {

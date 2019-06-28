@@ -48,6 +48,11 @@ router.get('/', (req, res, next) => {
         posts: posts.map(getPostData),
         count
       });
+    })
+    .catch(() => {
+      res.status(500).json({
+        message: 'Retrieving posts failed'
+      });
     });
 });
 
@@ -62,7 +67,11 @@ router.get('/:id', (req, res, next) => {
       } else {
         res.sendStatus(404);
       }
-
+    })
+    .catch(() => {
+      res.status(500).json({
+        message: 'Fetching post  failed'
+      });
     });
 });
 
@@ -76,12 +85,19 @@ router.post('/',
       content: req.body.content,
       imagePath: url + '/images/' + req.file.filename,
       creator: req.userData.userId
-    }).save().then((post) => {
-      res.status(201).json({
-        message: "Post added successfully",
-        post: getPostData(post)
+    })
+      .save()
+      .then((post) => {
+        res.status(201).json({
+          message: "Post added successfully",
+          post: getPostData(post)
+        });
+      })
+      .catch(() => {
+        res.status(500).json({
+          message: 'Creating a post failed'
+        })
       });
-    });
   });
 
 router.put('/',
@@ -107,6 +123,11 @@ router.put('/',
           message: "Post updated successfully",
           post: getPostData(post)
         });
+      })
+      .catch(() => {
+        res.status(500).json({
+          message: 'Unable to update post'
+        });
       });
   });
 
@@ -126,9 +147,11 @@ router.delete('/:id',
       .then(() => {
         res.status(200).json({ message: 'success' });
       })
-      .catch(err => {
-        res.sendStatus(400);
-      })
+      .catch(() => {
+        res.status(400).json({
+          message: 'Deleting post failed'
+        });
+      });
 
   });
 

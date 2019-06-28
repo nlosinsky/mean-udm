@@ -11,11 +11,14 @@ import {
   MatToolbarModule,
   MatButtonModule,
   MatExpansionModule,
-  MatProgressSpinnerModule, MatPaginatorModule
+  MatProgressSpinnerModule,
+  MatPaginatorModule,
+  MatSnackBarModule
 } from '@angular/material';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AuthInterceptorService } from './auth/auth-interceptor.service';
 import { HeaderComponent } from './header/header.component';
+import { ErrorInterceptorService } from './services/error-interceptor.service';
 
 @NgModule({
   declarations: [
@@ -36,12 +39,18 @@ import { HeaderComponent } from './header/header.component';
     MatProgressSpinnerModule,
     ReactiveFormsModule,
     FormsModule,
-    MatPaginatorModule
+    MatPaginatorModule,
+    MatSnackBarModule
   ],
   providers: [
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptorService,
+      multi: true
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: ErrorInterceptorService,
       multi: true
     }
   ],

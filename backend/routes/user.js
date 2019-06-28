@@ -11,13 +11,13 @@ router.post('/signup', (req, res, next) => {
     .then(hash => new User({ email, passwordHash: hash }).save())
     .then((newUser) => {
       res.status(201).json({
-        message: 'User was created successfully',
+        message: 'User has been created successfully',
         user: newUser
       });
     })
     .catch(err => {
       res.status(500).json({
-        error: err
+        message: 'Invalid authentication credentials'
       })
     })
 });
@@ -60,8 +60,7 @@ router.post('/login', (req, res, nect) => {
     })
     .catch((err) => {
       return res.status(404).json({
-        message: 'Auth failed',
-        error: err
+        message: 'Invalid authentication credentials'
       })
     });
 });

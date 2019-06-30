@@ -2,7 +2,10 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map, pluck } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 import { Post } from './post.model';
+
+const BACKEND_URL = environment.apiUrl + 'posts/';
 
 @Injectable({providedIn: 'root'})
 export class PostsService {
@@ -19,7 +22,7 @@ export class PostsService {
   }
 
   getPost(id: string) {
-    return this.http.get('http://localhost:3000/api/posts/' + id)
+    return this.http.get(BACKEND_URL + id)
       .pipe(
         pluck('post'),
         map(this.transformPost)
@@ -32,7 +35,7 @@ export class PostsService {
       pageSize: pageSize.toString()
     }});
 
-    this.http.get<{message: string, posts: any, count: number}>('http://localhost:3000/api/posts', {params})
+    this.http.get<{message: string, posts: any, count: number}>(BACKEND_URL, {params})
       .pipe(map(({posts, count}) => {
         return {
           posts: posts.map(this.transformPost),
@@ -52,7 +55,7 @@ export class PostsService {
     postData.append('content', content);
     postData.append('image', image, title);
 
-    return this.http.post('http://localhost:3000/api/posts', postData)
+    return this.http.post(BACKEND_URL, postData)
       .pipe(pluck('post'));
   }
 
@@ -77,12 +80,12 @@ export class PostsService {
       };
     }
 
-    return this.http.put('http://localhost:3000/api/posts', postData)
+    return this.http.put(BACKEND_URL, postData)
       .pipe(pluck('post'));
   }
 
   deletePost(id) {
-    return this.http.delete(`http://localhost:3000/api/posts/${id}`);
+    return this.http.delete(BACKEND_URL + id);
   }
 
   private transformPost(post) {

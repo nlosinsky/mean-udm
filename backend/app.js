@@ -5,12 +5,13 @@ const jwt = require('jsonwebtoken');
 const postsRoutes = require('./routes/posts');
 const userRoutes = require('./routes/user');
 const path = require('path');
+const config = require('./config');
 
 mongoose.set('useNewUrlParser', true);
 mongoose.set('useFindAndModify', false);
 mongoose.set('useCreateIndex', true);
 
-mongoose.connect('mongodb+srv://nick:YYedynKAzRs3LXw0@mean-udm-5uz3d.mongodb.net/test?retryWrites=true&w=majority');
+mongoose.connect(`mongodb+srv://nick:${config.mongo_atlas_password}@mean-udm-5uz3d.mongodb.net/test?retryWrites=true&w=majority`);
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
@@ -31,7 +32,7 @@ app.use((req, res, next) => {
   if (!token) return next();
 
   try {
-    req.userData = jwt.verify(token, 'secret');
+    req.userData = jwt.verify(token, config.jwt_secret);
   } catch(err) {
     return next();
   }

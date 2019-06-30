@@ -3,7 +3,10 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 import { AuthData } from './auth-data.model';
+
+const BACKEND_URL = environment.apiUrl + 'user';
 
 @Injectable({providedIn: 'root'})
 export class AuthService {
@@ -20,14 +23,14 @@ export class AuthService {
   }
 
   signup(data: AuthData) {
-    return this.http.post('http://localhost:3000/api/user/signup', data)
+    return this.http.post(BACKEND_URL + '/signup', data)
       .pipe(
-        tap(() => this.router.navigate(['/login']))
+        tap(() => this.router.navigate(['/auth/login']))
       );
   }
 
   login(data: AuthData) {
-    return this.http.post('http://localhost:3000/api/user/login', data)
+    return this.http.post(BACKEND_URL + '/login', data)
       .pipe(
         tap(({token, userId}: any) => {
           localStorage.setItem('mean_token', token || '');

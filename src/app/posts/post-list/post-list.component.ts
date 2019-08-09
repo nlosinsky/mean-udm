@@ -16,8 +16,8 @@ export class PostListComponent implements OnInit, OnDestroy {
   posts$: Observable<Post[]>;
   postsCount$: Observable<number>;
   isLoading = false;
-  postsPerPage = 2;
-  pageSizeOptions = [1, 2, 5, 10];
+  postsPerPage = 10;
+  pageSizeOptions = [5, 10, 20, 50];
   currentPage = 0;
 
   private ngUnsubscribe = new Subject();
@@ -59,6 +59,7 @@ export class PostListComponent implements OnInit, OnDestroy {
   onChangedPage(pageData: PageEvent) {
     this.isLoading = true;
     this.currentPage = pageData.pageIndex;
+    this.postsPerPage = pageData.pageSize;
 
     this.postsService.loadPosts(this.currentPage, this.postsPerPage);
   }

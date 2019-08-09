@@ -51,11 +51,10 @@ exports.getPost = (req, res, next) => {
 };
 
 exports.createPost = (req, res, next) => {
-  const url = req.protocol + '://' + req.get('host');
   new Post({
     title: req.body.title,
     content: req.body.content,
-    imagePath: url + '/images/' + req.file.filename,
+    imagePath: req.file.location,
     creator: req.userData.userId
   })
     .save()
